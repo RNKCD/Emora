@@ -1,36 +1,34 @@
+"""Rule-based, stateful crisis-screening prototype for Emora.
 
+This is not a clinical assessment or a substitute for emergency assistance.
+"""
 import re
 
 
 class SafetyGuard:
-    """
-    Stateful, rule-based safety screening prototype.
-
-    Not a clinical risk assessment.
-    Cannot reliably detect all emergencies.
-    """
-
     CRISIS_PATTERNS = [
-        r"\bi feel like dying\b",
-        r"\bi (?:want|wanna|wish) to die\b",
+        r"\bi feel like dying\b", r"\bi (?:want|wanna|wish) to die\b",
         r"\bi (?:want|wanna) to kill myself\b",
-        r"\bi (?:don't|do not) want to live anymore\b",
-        r"\bi (?:don't|do not) want to be alive\b",
+        r"\bi (?:don't|do not|dont) want to live anymore\b",
+        r"\bi (?:don't|do not|dont) want to be alive\b",
         r"\bi(?:'m| am) suicidal\b",
-        r"\bi(?:'m| am) thinking about suicide\b",
-        r"\bi(?:'m| am) thinking about killing myself\b",
-        r"\bi want to hurt myself\b",
-        r"\bi want to end my life\b",
+        r"\bi(?:'m| am) thinking about (?:suicide|killing myself)\b",
+        r"\bi want to hurt myself\b", r"\bi want to end my life\b",
         r"\beveryone would be better off without me\b",
         r"\bthe world would be better off without me\b",
     ]
-
     IMMEDIATE_PATTERNS = [
         r"\bi (?:just|already) took too many pills\b",
         r"\bi (?:just|already) overdosed\b",
         r"\bi(?:'m| am) about to (?:kill|hurt) myself\b",
         r"\bi(?:'m| am) going to kill myself (?:now|tonight|today)\b",
+        r"\b(?:gun|pistol|firearm) (?:on|to|against|at) my (?:head|temple)\b",
+        r"\b(?:holding|pointing|put|have|got) (?:a |the )?(?:gun|pistol|firearm) (?:to|at|against|on|up to) my (?:head|temple)\b",
     ]
+    YES = {"yes", "yeah", "yep", "ye", "y", "yes i am", "yes i do", "i am", "i do", "yeah i am"}
+    NO = {"no", "nope", "nah", "n", "not really", "no i don't", "no i am not", "i'm not"}
+    SAFE_CLAIMS = {"i am okay now", "i'm okay now", "im okay now", "i am safe now", "i'm safe now", "im safe now", "i am okay", "i'm okay", "im okay", "i am safe", "i'm safe", "im safe"}
+    HELP_REQUESTS = {"help", "help me", "please help", "please help me", "i need help"}
 
     def __init__(self):
         self.reset()
@@ -39,157 +37,181 @@ class SafetyGuard:
         self.active = False
         self.awaiting_answer = False
         self.last_question = None
+        self.immediate_danger = False
 
-    def _matches(self, patterns, text):
-        return any(
-            re.search(pattern, text, re.IGNORECASE)
-            for pattern in patterns
-        )
+    @staticmethod
+    def _matches(patterns, text):
+        return any(re.search(p, text, re.IGNORECASE) for p in patterns)
 
-    def _result(self, response):
-        return {
-            "is_crisis": True,
-            "response": response,
-        }
+    @staticmethod
+    def _result(response):
+        return {"is_crisis": True, "response": response}
 
-    def _resources(self):
-        return (
-            "If you might act on these thoughts or are "
-            "in immediate danger, call your local emergency "
-            "number (911 in the U.S.) or go to an emergency "
-            "department. In the U.S., call or text 988 "
-            "for crisis support. Elsewhere, contact your "
-            "local crisis service. If possible, ask someone "
-            "you trust to stay with you and move away "
-            "from anything you could use to hurt yourself."
+    @staticmethod
+    def _resources():
+        return ("If you are in immediate danger, call emergency services now (911 in the U.S.). "
+                "In the U.S., call or text 988 for crisis support; elsewhere, contact your local crisis service. "
+                "If possible, ask a trusted person to stay with you.")
+
+    def _set_state(self, question, immediate=False):
+        self.active = True
+        self.awaiting_answer = True
+        self.last_question = question
+        if immediate:
+            self.immediate_danger = True
+
+    def _emergency(self, firearm=False):
+        self._set_state("emergency_safety", immediate=True)
+        if firearm:
+            return self._result(
+                "This sounds like an immediate emergency. Please do not touch or handle the firearm. "
+                "If you can safely move away from it without handling it, do so. "
+                "Call 911 now (or your local emergency number) and tell them where you are and that a firearm is involved. "
+                "Ask someone nearby to call for you if you cannot. "
+                "Are you away from the firearm and able to contact emergency help?"
+            )
+        return self._result(
+            "I'm concerned you may be in immediate danger. Call emergency services now "
+            "(911 in the U.S.). If you took a harmful substance, don't wait for symptoms. "
+            "Ask someone nearby to help you call. " + self._resources() +
+            "\n\nCan you contact emergency help now?"
         )
 
     def check(self, message, history=None):
-        text = message.strip().lower()
+        text = re.sub(r"\s+", " ", str(message).strip().lower())
+        answer = text.strip(" .!?,")
+        firearm = bool(re.search(r"\b(?:gun|pistol|firearm) (?:on|to|against|at) my (?:head|temple)\b", text))
 
-        # Immediate danger takes priority.
+        # Fresh emergencies must always override previous state.
         if self._matches(self.IMMEDIATE_PATTERNS, text):
-            self.active = True
-            self.awaiting_answer = True
-            self.last_question = "help"
-
-            return self._result(
-                "I'm concerned you may be in immediate "
-                "danger. Please call emergency services "
-                "now. If you may have taken a harmful "
-                "substance, don't wait for symptoms. "
-                "Ask someone nearby to help you call.\n\n"
-                + self._resources()
-                + "\n\nCan you contact emergency help now?"
-            )
-
-        # Detect explicit or indirect crisis statements.
+            return self._emergency(firearm=firearm)
         if self._matches(self.CRISIS_PATTERNS, text):
-            self.active = True
-            self.awaiting_answer = True
-            self.last_question = "thoughts"
-
+            self._set_state("thoughts")
             return self._result(
-                "I'm concerned about your safety, "
-                "and I'm glad you told me.\n\n"
-                "Are you thinking about ending your life "
-                "or hurting yourself right now?\n\n"
+                "I'm concerned about your safety, and I'm glad you told me.\n\n"
+                "Are you thinking about ending your life or hurting yourself right now?\n\n"
                 + self._resources()
             )
+        if not self.active:
+            return {"is_crisis": False, "response": None}
+        return self._follow_up(answer)
 
-        # Continue a previously active safety conversation.
-        if self.active:
-            return self._follow_up(text)
+    def _follow_up(self, answer):
+        if answer in self.HELP_REQUESTS:
+            if self.immediate_danger:
+                return self._result(
+                    "Please call 911 now (or your local emergency number), or ask someone nearby to call. "
+                    "If a firearm is present, do not handle it; move away only if you can do so safely. "
+                    "Can you contact emergency help or get someone nearby to help?"
+                )
+            self._set_state("help")
+            return self._result("I'm here with you. Please contact someone you trust or call/text 988 in the U.S. "
+                                "If you're in immediate danger, call 911. Can someone be with you now?")
 
-        return {
-            "is_crisis": False,
-            "response": None,
-        }
-
-    def _follow_up(self, text):
-        yes_answers = {
-            "yes", "yeah", "yep", "i am",
-            "i do", "yes i am", "yes i do",
-        }
-
-        no_answers = {
-            "no", "nope", "not really",
-            "no i don't", "no i am not",
-        }
-
-        answer = text.strip(" .!?")
+        if answer in self.SAFE_CLAIMS:
+            self._set_state("reassess")
+            if self.immediate_danger:
+                return self._result(
+                    "I'm glad you replied. Because you described an immediate emergency, I need to check: "
+                    "are you now away from the firearm or other danger, and have you contacted emergency help "
+                    "or someone who can stay with you? If not, please call emergency services now."
+                )
+            return self._result(
+                "I'm glad you're feeling safer. Before we move on, are you physically safe now, "
+                "and are you no longer thinking of hurting yourself?"
+            )
 
         if self.last_question == "thoughts":
-            if answer in yes_answers:
-                self.last_question = "help"
-
+            if answer in self.YES:
+                self._set_state("help")
                 return self._result(
-                    "Thank you for telling me. "
-                    "I'm concerned about your safety. "
-                    + self._resources()
-                    + "\n\nCan you reach someone who "
-                    "can be with you right now?"
+                    "Thank you for telling me. I'm concerned about your safety. " + self._resources() +
+                    "\n\nCan you reach someone who can be with you right now?"
                 )
-
-            if answer in no_answers:
-                self.last_question = "safe"
-
-                return self._result(
-                    "Thank you for clarifying. "
-                    "Are you somewhere physically "
-                    "safe right now?"
-                )
+            if answer in self.NO:
+                self._set_state("safe")
+                return self._result("Thank you for clarifying. Are you somewhere physically safe right now?")
 
         if self.last_question == "safe":
-            if answer in yes_answers or answer in {
-                "i'm safe", "i am safe",
-            }:
-                self.last_question = "support"
-
+            if answer in self.YES:
+                self._set_state("reassess")
                 return self._result(
-                    "I'm glad you're somewhere safe. "
-                    "We can take things one step at a time. "
-                    "Would you like to share what's "
-                    "been weighing on you?"
+                    "I'm glad you're somewhere safe. Are you no longer thinking of hurting yourself?"
                 )
-
-            if answer in no_answers or "not safe" in answer:
-                self.last_question = "help"
-
-                return self._result(
-                    "I'm concerned that you're not "
-                    "somewhere safe. "
-                    + self._resources()
-                    + "\n\nIs there someone nearby "
-                    "who can help you?"
-                )
+            if answer in self.NO or "not safe" in answer:
+                self._set_state("help")
+                return self._result("I'm concerned you're not safe. " + self._resources() +
+                                    "\n\nCan someone nearby help you right now?")
 
         if self.last_question == "help":
-            if answer in yes_answers:
-                self.last_question = "support"
-
+            if answer in self.YES:
+                self._set_state("reassess")
                 return self._result(
-                    "Please reach out to them now. "
-                    "You deserve support from someone "
-                    "who can help directly. If you're "
-                    "in immediate danger, call "
-                    "emergency services."
+                    "Please contact that person now. Are you physically safe and no longer thinking "
+                    "of hurting yourself?"
                 )
+            if answer in self.NO:
+                return self._result("If someone you know isn't available, please contact emergency services "
+                                    "or a crisis line. " + self._resources())
 
-            if answer in no_answers:
+        if self.last_question == "emergency_safety":
+            if answer in self.YES:
+                self._set_state("reassess")
                 return self._result(
-                    "I hear you. If someone you know "
-                    "isn't available, please try "
-                    "emergency services or a crisis line. "
-                    + self._resources()
+                    "Please contact emergency services now if you haven't already. "
+                    "Are you away from the immediate danger, and is someone helping you?"
                 )
+            if answer in self.NO:
+                return self._result("This may still be an emergency. Call 911 now or ask someone nearby to call. "
+                                    "Do not handle a firearm. Move away only if safe to do so.")
 
-        # Keep the safety context active for ambiguous
-        # answers instead of assuming the risk is gone.
+        if self.last_question == "reassess":
+            # Only a clear, complete safety confirmation permits de-escalation.
+            # A bare 'yes' is insufficient after an immediate-danger disclosure.
+            clear_safe = bool(re.search(r"\b(?:i(?:'m| am) (?:safe|away from (?:the )?(?:gun|firearm|weapon))|"
+                                        r"(?:gun|firearm|weapon) is (?:away|gone)|"
+                                        r"(?:someone|friend|family|police|paramedics) is (?:here|with me)|"
+                                        r"i (?:called|contacted) (?:911|emergency services))\b", answer))
+            if self.immediate_danger:
+                away = bool(re.search(r"\b(?:away from (?:the )?(?:gun|firearm|weapon|danger)|"
+                                      r"(?:gun|firearm|weapon) is (?:away|gone))\b", answer))
+                help_arranged = bool(re.search(r"\b(?:called|contacted) (?:911|emergency services)|"
+                                               r"(?:police|paramedics|someone|friend|family) (?:is|are) (?:here|with me)\b", answer))
+                if away and help_arranged:
+                    self.reset()
+                    return self._result(
+                        "Thank you for confirming you're away from danger and have help. "
+                        "Please stay with that person and follow emergency responders' guidance. "
+                        "We can return to ordinary conversation when you're ready."
+                    )
+                if clear_safe:
+                    return self._result(
+                        "Thank you for telling me. Please stay away from any weapon. "
+                        "Have you also contacted emergency help or someone who can stay with you?"
+                    )
+                return self._result(
+                    "I want to make sure you're safe after what you described. "
+                    "Are you away from the immediate danger, and have you contacted emergency help "
+                    "or someone who can stay with you?"
+                )
+            if answer in self.YES or clear_safe:
+                self.reset()
+                return self._result(
+                    "I'm glad you're safe. We can return to what you wanted to talk about. "
+                    "If the thoughts return, please reach out for immediate support."
+                )
+            if answer in self.NO:
+                self._set_state("help")
+                return self._result("Thank you for being clear. " + self._resources() +
+                                    "\n\nCan someone stay with you right now?")
+
+        if self.immediate_danger:
+            return self._result(
+                "Because you described an immediate danger, please contact emergency services now "
+                "and move away from any weapon without handling it, if safe. "
+                "Are you away from danger and with someone who can help?"
+            )
         return self._result(
-            "I'm listening. After what you shared, "
-            "I also want to keep your safety in mind. "
-            "Could you tell me a little more about "
-            "what's happening right now?\n\n"
-            + self._resources()
+            "I'm listening, and I want to check your safety before changing topics. "
+            "Are you physically safe right now? " + self._resources()
         )
