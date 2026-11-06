@@ -2,7 +2,7 @@
 ### Your space to unwind.
 
 <p align="center">
-  <a href="https://YOUR-ACTUAL-APP-URL.streamlit.app">
+  <a href="https://emora12.streamlit.app">
     <img src="https://img.shields.io/badge/Live_Demo-Launch_Emora-2D5A45?style=for-the-badge&logo=streamlit&logoColor=white" alt="Live Demo">
   </a>
 </p>
