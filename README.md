@@ -152,10 +152,6 @@ These results are from the project's multilabel emotion classification evaluatio
 
 ![Emotion distribution](reports/figures/emotion_distribution.png)
 
-## System Architecture
-
-![Emora System Architecture](assets/emora-architecture.png)
-
 ## Machine Learning Results
 
 ![Emora Model Evaluation](assets/emora-ml-results.png)
@@ -173,40 +169,9 @@ Emora also includes scripts for:
 Evaluation results and visualizations are organized under `reports/`.
 
 ---
-
 ## System Architecture
 
-
-                       User Message
-                            |
-                            v
-                    Streamlit Interface
-                            |
-                            v
-                       Safety Guard
-                         /       \
-                 Crisis          No Crisis
-                   |                 |
-                   v                 v
-           Safety Response     DistilRoBERTa
-                               Emotion Model
-                                    |
-                                    v
-                             Emotion Predictions
-                                    |
-                                    v
-                           Conversation Memory
-                                    |
-                                    v
-                             OpenAI Response
-                                Generator
-                                    |
-                                    v
-                            Generated Response
-                                    |
-                                    v
-                            Streamlit Interface
-```
+![Emora System Architecture](assets/Emora-Architecture.png)
 
 The safety component runs before emotion inference and language-model generation.
 
