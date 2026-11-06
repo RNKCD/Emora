@@ -1,8 +1,6 @@
 # emora.
 ### Your space to unwind.
 
-**An emotion-aware AI companion powered by Natural Language Processing, deep learning, and generative AI.**
-
 Emora is an experimental mental-wellness chatbot designed to provide supportive, context-aware conversations. It combines a fine-tuned **DistilRoBERTa emotion classifier**, **OpenAI-powered response generation**, conversation memory, and a rule-based safety screening system.
 
 The project evolved from a simpler multi-agent chatbot into a hybrid AI application, with a focus on machine learning experimentation, model evaluation, conversational AI, and practical deployment.
