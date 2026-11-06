@@ -5,6 +5,19 @@ Emora is an experimental mental-wellness chatbot designed to provide supportive,
 
 The project evolved from a simpler multi-agent chatbot into a hybrid AI application, with a focus on machine learning experimentation, model evaluation, conversational AI, and practical deployment.
 
+## Application Preview
+
+<p align="center">
+  <img src="assets/emora-demo.png"
+       alt="Emora AI Companion Interface"
+       width="850">
+</p>
+
+<p align="center">
+  <em>A calm, minimal interface designed for supportive,
+  emotion-aware conversations.</em>
+</p>
+
 **Tech Stack:** Python · PyTorch · Hugging Face Transformers · DistilRoBERTa · Scikit-learn · OpenAI API · Streamlit · Pandas · NumPy
 
 ---
@@ -138,6 +151,14 @@ These results are from the project's multilabel emotion classification evaluatio
 **Emotion distribution**
 
 ![Emotion distribution](reports/figures/emotion_distribution.png)
+
+## System Architecture
+
+![Emora System Architecture](assets/emora-architecture.png)
+
+## Machine Learning Results
+
+![Emora Model Evaluation](assets/emora-ml-results.png)
 
 ### Additional Evaluation
 
