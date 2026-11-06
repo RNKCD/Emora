@@ -1,8 +1,6 @@
 # emora.
 ### Your space to unwind.
 
-**An emotion-aware AI companion powered by machine learning, natural language processing, and generative AI.**
-
 Emora is an experimental AI companion designed to provide supportive, context-aware conversations. It combines a fine-tuned **DistilRoBERTa emotion classifier**, OpenAI-powered response generation, conversation memory, and rule-based safety screening.
 
 Built as an end-to-end AI/ML project, Emora explores the complete development process—from dataset preparation and traditional machine learning baselines to transformer fine-tuning, evaluation, application development, and cloud deployment preparation.
