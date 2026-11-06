@@ -178,8 +178,11 @@ The safety component runs before emotion inference and language-model generation
 The emotion classifier provides structured signals, while the language model handles conversational response generation.
 
 ---
+The safety component runs before emotion inference and language-model generation.
 
-## Project Structure
+The emotion classifier provides structured signals, while the language model handles conversational response generation.
+
+Project Structure
 
 Emora/
 ├── app/
@@ -213,11 +216,8 @@ Emora/
 ├── pytest.ini
 ├── .gitignore
 └── README.md
-```
 
-The `legacy/` directory preserves the original Emora implementation, while the current application is maintained under `app/` and `src/emora/`.
-
----
+The legacy/ directory preserves the original Emora implementation, while the current application is maintained under app/ and src/emora/.
 
 ## Getting Started
 
