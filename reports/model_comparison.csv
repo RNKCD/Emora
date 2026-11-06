@@ -1,0 +1,3 @@
+model,micro_f1,macro_f1
+Logistic Regression,0.5088,0.4614
+Linear SVM,0.48615005813555845,0.4189879512060922

@@ -25,3 +25,20 @@ Thumbs.db
 # Logs
 *.log
 
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/raw/
+reports/conversation_evaluation/
+reports/performance_evaluation/
+models/distilroberta/
+models/emora_inference/
+.pytest_cache/
+
+*.safetensors
+*.pt

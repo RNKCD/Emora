@@ -1,0 +1,4 @@
+split,samples,average_words,average_characters,multi_label_pct,duplicate_texts
+Train,43410,12.84,68.34,16.36,184
+Validation,5426,12.79,68.19,16.18,3
+Test,5427,12.73,67.76,15.42,6
