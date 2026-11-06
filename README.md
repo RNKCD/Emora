@@ -1,6 +1,12 @@
 # emora.
 ### Your space to unwind.
 
+<p align="center">
+  <a href="https://YOUR-ACTUAL-APP-URL.streamlit.app">
+    <img src="https://img.shields.io/badge/Live_Demo-Launch_Emora-2D5A45?style=for-the-badge&logo=streamlit&logoColor=white" alt="Live Demo">
+  </a>
+</p>
+
 Emora is an experimental AI companion designed to provide supportive, context-aware conversations. It combines a fine-tuned **DistilRoBERTa emotion classifier**, OpenAI-powered response generation, conversation memory, and rule-based safety screening.
 
 Built as an end-to-end AI/ML project, Emora explores the complete development process—from dataset preparation and traditional machine learning baselines to transformer fine-tuning, evaluation, application development, and cloud deployment preparation.
