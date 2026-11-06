@@ -44,7 +44,7 @@ Emora is an experimental software and machine learning project, not a replacemen
 ## System Architecture
 
 <p align="center">
-  <img src="assets/emora-architecture.png" alt="Emora System Architecture">
+  <img src="assets/Emora-Architecture.png" alt="Emora System Architecture">
 </p>
 
 ### How It Works
