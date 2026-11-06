@@ -96,6 +96,28 @@ class SafetyGuard:
             return {"is_crisis": False, "response": None}
         return self._follow_up(answer)
 
+    @staticmethod
+    def _denies_current_intent(answer):
+        # Only recognize explicit, first-person denials. Do not interpret a
+        # generic "no" embedded in an unrelated sentence as a denial.
+        return bool(re.search(
+            r"^(?:no[,.!]?\s*)?(?:i (?:am|was) (?:just )?(?:emotional|upset)[,.!]?\s*)?"
+            r"(?:i(?:'m| am|m) (?:good|okay|ok|fine|safe)(?: now| rn)?|"
+            r"i (?:do not|don't|dont) (?:want to (?:die|hurt myself)|have (?:those )?thoughts)|"
+            r"i(?:'m| am) not (?:suicidal|thinking (?:of|about) hurting myself))\b",
+            answer,
+        )) or bool(re.search(
+            r"\b(?:not thinking (?:about|of) (?:suicide|hurting myself)|"
+            r"no (?:thoughts|intention) of (?:suicide|hurting myself))\b", answer
+        ))
+
+    @staticmethod
+    def _states_safe(answer):
+        return bool(re.search(
+            r"\bi(?:'m| am|m) (?:physically )?(?:safe|okay|ok|fine|good)(?: now| rn| right now)?\b",
+            answer,
+        ))
+
     def _follow_up(self, answer):
         if answer in self.HELP_REQUESTS:
             if self.immediate_danger:
@@ -108,7 +130,27 @@ class SafetyGuard:
             return self._result("I'm here with you. Please contact someone you trust or call/text 988 in the U.S. "
                                 "If you're in immediate danger, call 911. Can someone be with you now?")
 
-        if answer in self.SAFE_CLAIMS:
+        # A natural-language denial after the initial screening question
+        # should lead to a short safety check, not the generic fallback.
+        if self.last_question == "thoughts" and (
+            self._denies_current_intent(answer) or
+            (answer.startswith(("no ", "no.", "no,")) and
+             self._states_safe(answer))
+        ):
+            self._set_state("safe")
+            return self._result(
+                "Thank you for clarifying. I'm glad you're feeling better. "
+                "Are you physically safe right now?"
+            )
+
+        # Recognize natural reassurances such as 'I am safe rn'.
+        if self._states_safe(answer) or answer in self.SAFE_CLAIMS:
+            if self.last_question == "reassess" and not self.immediate_danger:
+                self.reset()
+                return self._result(
+                    "I'm glad you're safe. We can return to what you wanted to talk about. "
+                    "If those thoughts return, please reach out for support."
+                )
             self._set_state("reassess")
             if self.immediate_danger:
                 return self._result(
