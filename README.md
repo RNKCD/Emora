@@ -293,23 +293,6 @@ python -m pytest
 Deployment environments must be configured with their own secrets and model access permissions.
 
 ---
-
-## Emora 1.0 vs. Emora 2.0
-
-| Area | Emora 1.0 | Emora 2.0 |
-|---|---|---|
-| Architecture | Initial multi-agent chatbot | Hybrid ML and generative AI |
-| Emotion understanding | Original emotion agent | Fine-tuned DistilRoBERTa |
-| Conversation generation | Original NLP agent | OpenAI-powered generation |
-| Memory | Initial implementation | Recent history and summarization |
-| Safety | Initial functionality | Stateful rule-based screening |
-| Evaluation | Early experimentation | ML, conversation, performance, and regression testing |
-| Interface | Original application | Redesigned Streamlit experience |
-
-The original implementation is preserved under `legacy/` to document the project's evolution.
-
----
-
 ## Limitations and Responsible Use
 
 Emora is an experimental AI companion built for software engineering and machine learning research.
